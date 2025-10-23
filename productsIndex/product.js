@@ -3,60 +3,60 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-async function loadRandomProducts() {
-    try {
-        const { data: product, error } = await supabaseClient
+let currentPage = 0;
+const pageSize = 15;
+let allProducts = [];
+
+async function loadAllProducts() {
+    const { data: products, error } = await supabaseClient
         .from('product')
         .select('name, price, img_url, stock');
-
-        console.log("Supabase data:", product)
-        console.log("Supabase error:", error)
-
-        if (error) throw error;
-        if (!product || product.length === 0) {
-            document.getElementById('products-container').innerHTML = 
-            '<p class="text-gray-600 col-span-full text-center">No products available.</p>';
-            return;
-        }
-
-        const shuffled = product.sort(() => 0.5 - Math.random());
-        const randomProducts = shuffled.slice(0, 6);
-
-        displayProducts(randomProducts);
-        } catch (error) {
-            console.error('Error loading products:', error);
-            document.getElementById('products-container').innerHTML = 
-            `<p class="text-red-600 col-span-full text-center">Error loading products: ${error.message}</p>`;
-        }
+    if (error) throw error;
+    allProducts = products;
+    renderPage();
 }
 
-function displayProducts(product) {
+function renderPage() {
     const container = document.getElementById('products-container');
-    container.innerHTML = '';
-
-    product.forEach(product => {
-    const card = `
+    const start = currentPage * pageSize;
+    const end = start + pageSize;
+    const visibleProducts = allProducts.slice(start, end);
+    const html = visibleProducts.map(p => `
         <div class="w-full bg-gray-200 p-3 flex flex-col gap-1 rounded-xl">
-            <div class="aspect-square rounded-xl bg-gray-700 overflow-hidden">
-                <img src="${product.img_url || 'https://via.placeholder.com/300x200?text=No+Image'}" alt="${product.name}" class="w-full h-full object-cover">
-            </div>
-            <div class="flex flex-col gap-4">
-                <div class="flex flex-row justify-between items-start">
-                    <div class="flex flex-col flex-1">
-                        <span class="text-lg font-bold truncate block w-full">${product.name}</span>
-                        <p class="text-xs text-gray-700">Stock: ${product.stock}</p>
-                    </div>
-                    <span class="font-bold text-red-600">${product.price}</span>
-                </div>
-                <button class="bg-red-500 hover:bg-red-700 text-white py-2 rounded-md">
-                Add to cart
-                </button>
-            </div>
+        <div class="aspect-square rounded-xl bg-gray-700 overflow-hidden">
+            <img src="${p.img_url || 'https://via.placeholder.com/300x200?text=No+Image'}" loading="lazy" decoding="async" class="w-full h-full object-cover">
         </div>
-        `;
-        container.innerHTML += card;
-    });
+        <div class="flex flex-col gap-4">
+            <div class="flex flex-row justify-between items-start">
+            <div class="flex flex-col flex-1">
+                <span class="text-lg font-bold block overflow-hidden text-ellipsis whitespace-nowrap" title="${p.name}">
+                ${p.name}
+                </span>
+                <p class="text-xs text-gray-700">Stock: ${p.stock}</p>
+            </div>
+            <span class="font-bold text-red-600">${p.price}</span>
+            </div>
+            <button class="bg-red-500 hover:bg-red-700 text-white py-2 rounded-md">
+            Add to cart
+            </button>
+        </div>
+        </div>
+    `).join('');
+
+    if (currentPage === 0) container.innerHTML = html;
+    else container.insertAdjacentHTML('beforeend', html);
+
+    if ((currentPage + 1) * pageSize >= allProducts.length)
+        document.getElementById('load-more').style.display = 'none';
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadAllProducts();
+    document.getElementById('load-more').addEventListener('click', () => {
+        currentPage++;
+        renderPage();
+    });
+});
 
 async function searchProducts(query) {
     const resultsContainer = document.getElementById('searchResults')
@@ -122,7 +122,7 @@ async function searchProducts(query) {
 }
 
 // Initialize the page
-loadRandomProducts();
+loadAllProducts();
 
 // Attach search listener when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
