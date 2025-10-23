@@ -60,7 +60,7 @@ window.addEventListener('scroll', function() {
         isScrolled = true;
         navbar.classList.remove('bg-opacity-0');
         navbar.classList.add('bg-opacity-100');
-        logo.src = '../assets/img_logos/text_logo.png';     
+        logo.src = 'assets/img_logos/text_logo.png';     
         
         navButtons.forEach(button => {
             button.classList.remove('text-white');
@@ -71,7 +71,7 @@ window.addEventListener('scroll', function() {
         isScrolled = false;
         navbar.classList.remove('bg-opacity-100');
         navbar.classList.add('bg-opacity-0');
-        logo.src = '../assets/img_logos/text_logo_plain.png';
+        logo.src = 'assets/img_logos/text_logo_plain.png';
 
         navButtons.forEach(button => {
             button.classList.remove('text-black');
