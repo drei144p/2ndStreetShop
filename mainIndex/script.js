@@ -81,13 +81,13 @@ window.addEventListener('scroll', function() {
 
     logo.addEventListener('mouseenter', () => {
         if (!isScrolled) {
-            logo.src = '/assets/img_logos/text_logo_hover.png';
+            logo.src = 'assets/img_logos/text_logo_hover.png';
         }
     });
 
     logo.addEventListener('mouseleave', () => {
         if (!isScrolled) {
-            logo.src = '/assets/img_logos/text_logo_plain.png';
+            logo.src = 'assets/img_logos/text_logo_plain.png';
         }
     });
 
