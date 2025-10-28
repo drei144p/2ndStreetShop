@@ -8,6 +8,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style src="style.css"></style>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Audiowide&amp;display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -64,11 +67,11 @@
                         Products
                         <span class="absolute left-0 bottom-0 w-0 h-0.5 bg-red-500 transition-all duration-300 group-hover:w-full"></span>
                     </a>
-                    <a href="#" class="nav-button text-white hover:text-red-500 px-2 py-1 text-base font-medium transition-colors relative group">
+                    <a href="../servicesIndex/services.html" class="nav-button text-white hover:text-red-500 px-2 py-1 text-base font-medium transition-colors relative group">
                         Services
                         <span class="absolute left-0 bottom-0 w-0 h-0.5 bg-red-500 transition-all duration-300 group-hover:w-full"></span>
                     </a>
-                    <a href="#" class="nav-button text-white hover:text-red-500 px-2 py-1 text-base font-medium transition-colors relative group">
+                    <a href="../contactIndex/contact.html" class="nav-button text-white hover:text-red-500 px-2 py-1 text-base font-medium transition-colors relative group">
                         Contact Us
                         <span class="absolute left-0 bottom-0 w-0 h-0.5 bg-red-500 transition-all duration-300 group-hover:w-full"></span>
                     </a>
@@ -78,11 +81,6 @@
                     <button id="searchButton" class="nav-button text-white hover:text-red-500 transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                        </svg>
-                    </button>
-                    <button class="nav-button text-white hover:text-red-500 transition-colors">
-                        <svg class="w-10 h-10" fill="currentColor" stroke="black" viewBox="0 0 512 512">
-                            <path d="M351.9 329.506H206.81l-3.072-12.56H368.16l26.63-116.019-217.23-26.04-9.952-58.09h-50.4v21.946h31.894l35.233 191.246a32.927 32.927 0 1 0 36.363 21.462h100.244a32.825 32.825 0 1 0 30.957-21.945zM181.427 197.45l186.51 22.358-17.258 75.195H198.917z"/>
                         </svg>
                     </button>
                     <div class="md:hidden flex items-center">
@@ -99,8 +97,8 @@
 
         <div id="mobileMenu" class="hidden absolute top-16 right-4 bg-white shadow-lg rounded-lg py-2 w-40 z-50">
             <a href="#" class="block px-4 py-2 text-black hover:text-red-500 text-base font-medium transition-colors">Products</a>
-            <a href="#" class="block px-4 py-2 text-black hover:text-red-500 text-base font-medium transition-colors">Services</a>
-            <a href="#" class="block px-4 py-2 text-black hover:text-red-500 text-base font-medium transition-colors">Contact Us</a>
+            <a href="../servicesIndex/services.html" class="block px-4 py-2 text-black hover:text-red-500 text-base font-medium transition-colors">Services</a>
+            <a href="../contactIndex/contact.htmlas" class="block px-4 py-2 text-black hover:text-red-500 text-base font-medium transition-colors">Contact Us</a>
         </div>
     </header>
 
@@ -110,7 +108,9 @@
                 <source src="../assets/vids/hero2.mp4" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
+
             <div class="max-w-4xl mx-auto relative z-10">
+                <h1 class="text-4xl font-bold text-white text-center w-full pt-10" style="font-family: 'Audiowide', sans-serif;">BROWSE OUR CATALOGUE</h1>
                 <div id="products-container" class="grid grid-cols-2 lg:grid-cols-3 gap-9 items-stretch pt-10"></div>
             </div>
 
@@ -120,15 +120,28 @@
                 </button>
             </div>
         </section>
+        
+        <button id="cart-toggle" class="fixed bottom-4 right-4 z-50 bg-white p-3 rounded-full shadow-lg hover:bg-gradient-to-r from-red-400 to-red-500">
+            <svg class="w-10 h-10 text-black" fill="currentColor" stroke="black" viewBox="0 0 512 512">
+                <path d="M351.9 329.506H206.81l-3.072-12.56H368.16l26.63-116.019-217.23-26.04-9.952-58.09h-50.4v21.946h31.894l35.233 191.246a32.927 32.927 0 1 0 36.363 21.462h100.244a32.825 32.825 0 1 0 30.957-21.945zM181.427 197.45l186.51 22.358-17.258 75.195H198.917z"/>
+            </svg>
+        </button>
+
+        <div id="cart-popup" class="hidden fixed bottom-20 right-4 bg-white shadow-lg rounded-lg p-4 w-80 max-h-96 overflow-y-auto mb-4">
+            <h3 class="text-lg font-semibold mb-2">Your Cart</h3>
+            <ul id="cart-items"></ul>
+            <button id="checkout-btn" class="hidden mt-4 bg-gradient-to-r from-red-400 to-red-500 text-white px-4 py-2 rounded-lg w-full">
+                Order Now
+            </button>
+        </div>
 
         <footer class="bg-black text-white py-2">
             <div class="container mx-auto flex flex-col items-center">
                 <img src="../assets/img_logos/text_logo_hover.png" alt="Logo" class="h-20">
-                <nav class="flex space-x-8 text-sm font-semibold">
-                    <a href="../contactIndex/contact.html" class="hover:text-gray-400">FAQ</a>
-                    <a href="#" class="hover:text-gray-400">Returns</a>
-                    <a href="#" class="hover:text-gray-400">Privacy</a>
-                    <a href="#" class="hover:text-gray-400">Contact Support</a>
+                <nav class="flex space-x-8 text-sm font-semibold mb-2">
+                    <a href="../other/returns.html" class="hover:text-gray-400">Returns</a>
+                    <a href="https://www.facebook.com/profile.php?id=100094557082075" class="hover:text-gray-400" target="_blank" rel="noopener noreferrer">Social</a>
+                    <a href="https://www.messenger.com/t/100094557082075" class="hover:text-gray-400" target="_blank" rel="noopener noreferrer">Contact Support</a>
                     <button onclick="window.scrollTo({ top: 0, behavior: 'smooth' })" class="text-white  hover:text-gray-400 transition"> Back to Top </button>
                 </nav>
             </div>
@@ -140,3 +153,4 @@
     <script src="product.js"></script>
 
 </body>
+</html>

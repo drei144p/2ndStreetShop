@@ -22,7 +22,7 @@ function renderPage() {
     const end = start + pageSize;
     const visibleProducts = allProducts.slice(start, end);
     const html = visibleProducts.map(p => `
-        <div class="w-full bg-gray-200 p-3 flex flex-col gap-1 rounded-xl">
+        <div data-product class="w-full bg-gray-200 p-3 flex flex-col gap-1 rounded-xl">
         <div class="aspect-square rounded-xl bg-gray-700 overflow-hidden">
             <img src="${p.img_url || 'https://via.placeholder.com/300x200?text=No+Image'}" loading="lazy" decoding="async" class="w-full h-full object-cover">
         </div>
@@ -34,7 +34,7 @@ function renderPage() {
                 </span>
                 <p class="text-xs text-gray-700">Stock: ${p.stock}</p>
             </div>
-            <span class="font-bold text-red-600">${p.price}</span>
+            <span class="font-bold text-red-600">₱${p.price}</span>
             </div>
             <button class="bg-red-500 hover:bg-red-700 text-white py-2 rounded-md">
             Add to cart
@@ -92,7 +92,7 @@ async function searchProducts(query) {
         resultsContainer.innerHTML = `
             <div class="mt-4 grid grid-cols-1 sm:grid-cols-1 gap-4 p-4 max-h-[calc(100vh-200px)] overflow-y-auto">
                 ${product.map(product => `
-                    <div class="-mx-2 mt-4 h-auto w-auto bg-gray-300 p-2 flex items-start gap-4 rounded-xl">
+                    <div data-product class="-mx-2 mt-4 h-auto w-auto bg-gray-300 p-2 flex items-start gap-4 rounded-xl">
                         <div class="size-24 bg-red-100 rounded-xl overflow-hidden">
                             <img src="${product.img_url || 'https://via.placeholder.com/100x100?text=No+Image'}" alt="${product.name}" class="object-cover w-full h-full rounded-xl">
                         </div>
@@ -102,7 +102,7 @@ async function searchProducts(query) {
                                     <span class="text-lg font-bold line-clamp-2 h-9 w-full">${product.name}</span>
                                     <p class="text-xs text-gray-700">Stock: ${product.stock}</p>
                                 </div>
-                                <span class="font-bold text-red-600 pr-2">${product.price}</span>
+                                <span class="font-bold text-red-600 pr-2">₱${product.price}</span>
                             </div>
                             <button class="bg-red-500 hover:bg-red-700 text-white py-1 rounded-md">
                             Add to cart
@@ -124,7 +124,6 @@ async function searchProducts(query) {
 // Initialize the page
 loadAllProducts();
 
-// Attach search listener when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
@@ -134,4 +133,63 @@ document.addEventListener('DOMContentLoaded', function() {
             searchProducts(query)
         });
     }
+});
+
+
+let cart = [];
+
+document.getElementById("cart-toggle").addEventListener("click", () => {
+    const cartPopup = document.getElementById("cart-popup");
+    cartPopup.classList.toggle("hidden");
+});
+
+document.addEventListener("click", (e) => {
+    if (e.target && e.target.textContent.trim() === "Add to cart") {
+        const card = e.target.closest("[data-product]");
+        const name = card.querySelector("span.text-lg")?.textContent.trim();
+        const price = card.querySelector("span.font-bold.text-red-600")?.textContent.trim();
+        const img = card.querySelector("img")?.getAttribute("src");
+        
+        console.log("Adding to cart:", { name, price, img });
+        
+        addToCart({ name, price, img_url: img });
+    }
+});
+
+function addToCart(item) {
+    const existing = cart.find(i => i.name === item.name);
+    if (existing) {
+        existing.quantity += 1;
+    } else {
+        cart.push({ ...item, quantity: 1 });
+    }
+    renderCart();
+}
+
+function renderCart() {
+    const cartList = document.getElementById("cart-items");
+    const checkoutBtn = document.getElementById("checkout-btn");
+    
+    cartList.innerHTML = "";
+    cart.forEach(item => {
+        const li = document.createElement("li");
+        li.className = "flex justify-between items-center mb-2";
+        li.innerHTML = `
+            <div class="flex items-center gap-2">
+                <img src="${item.img_url}" alt="${item.name}" class="w-10 h-10 rounded">
+                <span>${item.name} x${item.quantity}</span>
+            </div>
+            <span>${item.price}</span>
+        `;
+        cartList.appendChild(li);
+    });
+
+    if (cart.length > 0) checkoutBtn.classList.remove("hidden");
+    else checkoutBtn.classList.add("hidden");
+
+    localStorage.setItem("cartItems", JSON.stringify(cart));
+}
+
+document.getElementById("checkout-btn").addEventListener("click", () => {
+window.location.href = "checkout.html";
 });

@@ -20,7 +20,7 @@ async function loadRandomProducts() {
         }
 
         const shuffled = product.sort(() => 0.5 - Math.random());
-        const randomProducts = shuffled.slice(0, 6);
+        const randomProducts = shuffled.slice(0, 8);
 
         displayProducts(randomProducts);
         } catch (error) {
@@ -46,11 +46,8 @@ function displayProducts(product) {
                         <span class="text-lg font-bold truncate block w-full">${product.name}</span>
                         <p class="text-xs text-gray-700">Stock: ${product.stock}</p>
                     </div>
-                    <span class="font-bold text-red-600">${product.price}</span>
+                    <span class="font-bold text-red-600">₱${product.price}</span>
                 </div>
-                <button class="bg-red-500 hover:bg-red-700 text-white py-2 rounded-md">
-                Add to cart
-                </button>
             </div>
         </div>
         `;
@@ -102,7 +99,7 @@ async function searchProducts(query) {
                                     <span class="text-lg font-bold line-clamp-2 h-9 w-full">${product.name}</span>
                                     <p class="text-xs text-gray-700">Stock: ${product.stock}</p>
                                 </div>
-                                <span class="font-bold text-red-600 pr-2">${product.price}</span>
+                                <span class="font-bold text-red-600 pr-2">₱${product.price}</span>
                             </div>
                             <button class="bg-red-500 hover:bg-red-700 text-white py-1 rounded-md">
                             Add to cart

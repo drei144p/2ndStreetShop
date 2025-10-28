@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+    <body class="bg-gray-100 min-h-screen relative">
+    <video autoplay muted loop playsinline class="fixed top-0 left-0 w-full h-full object-cover -z-10">
+        <source src="../assets/vids/hero2.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+    <div class="container mx-auto p-6 max-w-7xl">
+        <div class="bg-white/90 backdrop-blur-sm shadow-2xl rounded-2xl overflow-hidden">
+            <div class="bg-gradient-to-r from-gray-600 to-gray-800 p-6">
+                <h1 class="text-3xl font-bold text-white">Checkout</h1>
+            </div>
+
+            <div class="p-8">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Left Column - Cart Items -->
+                    <div class="space-y-6">
+                        <div class="bg-gray-50 rounded-xl p-6 shadow-sm">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-4">Order Summary</h2>
+                            <div id="checkout-items" class="space-y-4"></div>
+                            <div class="border-t-2 border-gray-300 mt-6 pt-4">
+                                <div class="flex justify-between items-center text-2xl font-bold text-gray-900">
+                                    <span>Total:</span>
+                                    <span id="total-price">₱0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <!-- Shipping Form -->
+                        <div class="bg-gray-50 rounded-xl p-6 shadow-sm">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-4">Shipping Address</h2>
+                            <form id="shipping-form" class="space-y-4">
+                                <div>
+                                    <label class="block text-gray-700 font-medium mb-2" for="name">Full Name</label>
+                                    <input id="name" name="name" placeholder="Juan Dela Cruz" class="w-full bg-white rounded-lg border border-gray-300 text-gray-900 px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition" type="text" required>
+                                </div>
+
+                                <div>
+                                    <label class="block text-gray-700 font-medium mb-2" for="address">Address</label>
+                                    <textarea id="address" name="address" placeholder="House/Building No., Street Name" class="w-full bg-white rounded-lg border border-gray-300 text-gray-900 px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition" rows="3" required></textarea>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-gray-700 font-medium mb-2" for="city">City</label>
+                                        <input id="city" name="city" placeholder="Manila" class="w-full bg-white rounded-lg border border-gray-300 text-gray-900 px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition" type="text" required>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-gray-700 font-medium mb-2" for="state">State/Province</label>
+                                        <input id="state" name="state" placeholder="Metro Manila" class="w-full bg-white rounded-lg border border-gray-300 text-gray-900 px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition" type="text" required>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-gray-700 font-medium mb-2" for="zip">ZIP Code</label>
+                                        <input id="zip" name="zip" placeholder="1000" class="w-full bg-white rounded-lg border border-gray-300 text-gray-900 px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition" type="text" required>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-gray-700 font-medium mb-2" for="country">Country*</label>
+                                        <select id="country" name="country" class="w-full bg-white rounded-lg border border-gray-300 text-gray-900 px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition" required>
+                                            <option value="">Select a country</option>
+                                            <option value="PH" selected>Philippines</option>
+                                            <option value="US">United States</option>
+                                            <option value="JP">Japan</option>
+                                            <option value="SG">Singapore</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Payment Method -->
+                        <div class="bg-gray-50 rounded-xl p-6 shadow-sm">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-4">Payment Method</h2>
+                            <div class="space-y-3" id="payment-options">
+                                <!-- Google Pay (Disabled) -->
+                                <div class="relative group">
+                                    <label class="flex justify-between items-center rounded-lg p-4 border-2 border-gray-200 bg-gray-100 cursor-not-allowed opacity-60">
+                                        <div class="flex items-center gap-3">
+                                            <svg fill="currentColor" viewBox="0 0 32 32" height="28" width="28" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M32 13.333l-4.177 9.333h-1.292l1.552-3.266-2.75-6.068h1.359l1.99 4.651h0.026l1.927-4.651zM14.646 16.219v3.781h-1.313v-9.333h3.474c0.828-0.021 1.63 0.266 2.25 0.807 0.615 0.505 0.953 1.219 0.943 1.974 0.010 0.766-0.339 1.5-0.943 1.979-0.604 0.531-1.354 0.792-2.25 0.792zM14.641 11.818v3.255h2.198c0.484 0.016 0.958-0.161 1.297-0.479 0.339-0.302 0.526-0.714 0.526-1.141 0-0.432-0.188-0.844-0.526-1.141-0.349-0.333-0.818-0.51-1.297-0.495zM22.63 13.333c0.833 0 1.495 0.234 1.979 0.698s0.724 1.099 0.724 1.906v3.859h-1.083v-0.87h-0.047c-0.469 0.714-1.089 1.073-1.865 1.073-0.667 0-1.219-0.203-1.667-0.615-0.438-0.385-0.682-0.948-0.672-1.531 0-0.646 0.234-1.161 0.708-1.547 0.469-0.38 1.099-0.573 1.885-0.573 0.672 0 1.224 0.13 1.656 0.385v-0.271c0.005-0.396-0.167-0.776-0.464-1.042-0.297-0.276-0.688-0.432-1.094-0.427-0.63 0-1.13 0.276-1.5 0.828l-0.995-0.646c0.547-0.818 1.359-1.229 2.432-1.229zM21.167 17.88c-0.005 0.302 0.135 0.583 0.375 0.766 0.25 0.203 0.563 0.313 0.88 0.307 0.474 0 0.932-0.198 1.271-0.547 0.359-0.333 0.563-0.802 0.563-1.292-0.354-0.292-0.844-0.438-1.474-0.438-0.464 0-0.844 0.115-1.151 0.344-0.307 0.234-0.464 0.516-0.464 0.859zM5.443 10.667c1.344-0.016 2.646 0.479 3.641 1.391l-1.552 1.521c-0.568-0.526-1.318-0.813-2.089-0.797-1.385 0.005-2.609 0.891-3.057 2.198-0.229 0.661-0.229 1.38 0 2.042 0.448 1.307 1.672 2.193 3.057 2.198 0.734 0 1.365-0.182 1.854-0.505 0.568-0.375 0.964-0.958 1.083-1.625h-2.938v-2.052h5.13c0.063 0.359 0.094 0.719 0.094 1.083 0 1.625-0.594 3-1.62 3.927-0.901 0.813-2.135 1.286-3.604 1.286-2.047 0.010-3.922-1.125-4.865-2.938-0.771-1.505-0.771-3.286 0-4.792 0.943-1.813 2.818-2.948 4.859-2.938z"></path>
+                                            </svg>
+                                            <span class="font-semibold text-gray-800">Google Pay</span>
+                                        </div>
+                                        <input class="w-5 h-5 text-indigo-600 focus:ring-2 focus:ring-indigo-500" value="google" name="payment" type="radio" disabled>
+                                    </label>
+                                    <!-- Tooltip -->
+                                    <div class="absolute invisible group-hover:visible opacity-0 group-hover:opacity-100 bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-sm rounded-lg whitespace-nowrap transition-all duration-200 pointer-events-none">
+                                        Currently not available
+                                        <div class="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Apple Pay (Disabled) -->
+                                <div class="relative group">
+                                    <label class="flex justify-between items-center rounded-lg p-4 border-2 border-gray-200 bg-gray-100 cursor-not-allowed opacity-60">
+                                        <div class="flex items-center gap-3">
+                                            <svg fill="currentColor" viewBox="0 0 640 512" height="28" width="28" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M116.9 158.5c-7.5 8.9-19.5 15.9-31.5 14.9-1.5-12 4.4-24.8 11.3-32.6 7.5-9.1 20.6-15.6 31.3-16.1 1.2 12.4-3.7 24.7-11.1 33.8m10.9 17.2c-17.4-1-32.3 9.9-40.5 9.9-8.4 0-21-9.4-34.8-9.1-17.9.3-34.5 10.4-43.6 26.5-18.8 32.3-4.9 80 13.3 106.3 8.9 13 19.5 27.3 33.5 26.8 13.3-.5 18.5-8.6 34.5-8.6 16.1 0 20.8 8.6 34.8 8.4 14.5-.3 23.6-13 32.5-26 10.1-14.8 14.3-29.1 14.5-29.9-.3-.3-28-10.9-28.3-42.9-.3-26.8 21.9-39.5 22.9-40.3-12.5-18.6-32-20.6-38.8-21.1m100.4-36.2v194.9h30.3v-66.6h41.9c38.3 0 65.1-26.3 65.1-64.3s-26.4-64-64.1-64h-73.2zm30.3 25.5h34.9c26.3 0 41.3 14 41.3 38.6s-15 38.8-41.4 38.8h-34.8V165zm162.2 170.9c19 0 36.6-9.6 44.6-24.9h.6v23.4h28v-97c0-28.1-22.5-46.3-57.1-46.3-32.1 0-55.9 18.4-56.8 43.6h27.3c2.3-12 13.4-19.9 28.6-19.9 18.5 0 28.9 8.6 28.9 24.5v10.8l-37.8 2.3c-35.1 2.1-54.1 16.5-54.1 41.5.1 25.2 19.7 42 47.8 42zm8.2-23.1c-16.1 0-26.4-7.8-26.4-19.6 0-12.3 9.9-19.4 28.8-20.5l33.6-2.1v11c0 18.2-15.5 31.2-36 31.2zm102.5 74.6c29.5 0 43.4-11.3 55.5-45.4L640 193h-30.8l-35.6 115.1h-.6L537.4 193h-31.6L557 334.9l-2.8 8.6c-4.6 14.6-12.1 20.3-25.5 20.3-2.4 0-7-.3-8.9-.5v23.4c1.8.4 9.3.7 11.6.7z"></path>
+                                            </svg>
+                                            <span class="font-semibold text-gray-800">Apple Pay</span>
+                                        </div>
+                                        <input class="w-5 h-5 text-indigo-600 focus:ring-2 focus:ring-indigo-500" value="apple" name="payment" type="radio" disabled>
+                                    </label>
+                                    <!-- Tooltip -->
+                                    <div class="absolute invisible group-hover:visible opacity-0 group-hover:opacity-100 bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-sm rounded-lg whitespace-nowrap transition-all duration-200 pointer-events-none">
+                                        Currently not available
+                                        <div class="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Cash on Delivery -->
+                                <label class="flex justify-between items-center rounded-lg p-4 border-2 border-gray-200 has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50 hover:bg-gray-100 transition-all cursor-pointer">
+                                    <div class="flex items-center gap-3">
+                                        <svg fill="currentColor" height="28" width="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+                                        </svg>
+                                        <span class="font-semibold text-gray-800">Cash on Delivery</span>
+                                    </div>
+                                    <input class="w-5 h-5 text-indigo-600 focus:ring-2 focus:ring-indigo-500" value="cod" name="payment" type="radio" required>
+                                </label>
+
+                                <!-- Cash on Pickup-->
+                                <label class="flex justify-between items-center rounded-lg p-4 border-2 border-gray-200 has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50 hover:bg-gray-100 transition-all cursor-pointer">
+                                    <div class="flex items-center gap-3">
+                                        <svg fill="currentColor" viewBox="0 0 24 24" height="28" width="28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                            <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/>
+                                        </svg>
+                                        <span class="font-semibold text-gray-800">Cash on Pickup</span>
+                                    </div>
+                                    <input class="w-5 h-5 text-indigo-600 focus:ring-2 focus:ring-indigo-500" value="cop" name="payment" type="radio" required>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button id="submit-btn" type="button" class="w-full bg-gradient-to-r from-gray-600 to-gray-800 text-white font-bold py-4 px-6 rounded-xl hover:from-red-500 hover:to-red-600 transform hover:scale-105 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                            Submit
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://wqlxqsuxzydsnvrifksu.supabase.co'
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxbHhxc3V4enlkc252cmlma3N1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU3NTYwNjgsImV4cCI6MjA2MTMzMjA2OH0.xLCjspi1YMi01wMfgDx2QIN7aM19tq4Vk-txskxNVH0'
+        
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const checkoutContainer = document.getElementById("checkout-items");
+        const totalPriceElement = document.getElementById("total-price");
+        const cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+        let formSubmitted = false;
+
+        function calculateTotal() {
+            return cartItems.reduce((total, item) => {
+                const price = parseFloat(item.price.replace(/[₱,]/g, ''));
+                return total + (price * item.quantity);
+            }, 0);
+        }
+
+        function displayCartItems() {
+            if (cartItems.length === 0) {
+                checkoutContainer.innerHTML = '<p class="text-gray-500 text-center py-8">Your cart is empty.</p>';
+                totalPriceElement.textContent = '₱0.00';
+            } else {
+                checkoutContainer.innerHTML = cartItems.map(item => `
+                    <div class="flex justify-between items-center p-4 bg-white rounded-lg border border-gray-200">
+                        <div class="flex items-center gap-4">
+                            <img src="${item.img_url}" alt="${item.name}" class="w-16 h-16 rounded-lg object-cover">
+                            <div>
+                                <p class="font-semibold text-gray-800">${item.name}</p>
+                                <p class="text-sm text-gray-600">Quantity: ${item.quantity}</p>
+                            </div>
+                        </div>
+                        <span class="font-bold text-indigo-600">${item.price}</span>
+                    </div>
+                `).join('');
+                
+                const total = calculateTotal();
+                totalPriceElement.textContent = `₱${total.toFixed(2)}`;
+            }
+        }
+
+        displayCartItems();
+
+        const submitBtn = document.getElementById('submit-btn');
+        const shippingForm = document.getElementById('shipping-form');
+
+        submitBtn.addEventListener('click', async () => {
+            if (!formSubmitted) {
+                // Validate form
+                if (!shippingForm.checkValidity()) {
+                    shippingForm.reportValidity();
+                    return;
+                }
+
+                // Check if payment method is selected
+                const paymentMethod = document.querySelector('input[name="payment"]:checked');
+                if (!paymentMethod) {
+                    alert('Please select a payment method');
+                    return;
+                }
+
+                // Change button
+                submitBtn.textContent = 'Order Now';
+                formSubmitted = true;
+            } else {
+                // Submit order
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="inline-block animate-spin mr-2">⏳</span> Processing...';
+
+                try {
+                    const formData = new FormData(shippingForm);
+                    const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+                    
+                    const orderData = {
+                        customer_name: formData.get('name'),
+                        address: formData.get('address'),
+                        city: formData.get('city'),
+                        state: formData.get('state'),
+                        zip_code: formData.get('zip'),
+                        country: formData.get('country'),
+                        payment_method: paymentMethod,
+                        items: cartItems,
+                        total_amount: calculateTotal(),
+                        order_date: new Date().toISOString()
+                    };
+
+                    const { data, error } = await supabaseClient
+                        .from('orders')
+                        .insert([orderData]);
+
+                    if (error) throw error;
+
+                    localStorage.removeItem('cartItems');
+                    alert('Order placed successfully! 🎉');
+                    window.location.href = 'products.html'; // Redirect to home or order confirmation page
+                } catch (error) {
+                    console.error('Error placing order:', error);
+                    alert('Failed to place order. Please try again.');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Order Now';
+                }
+            }
+        }); 
+
+        document.querySelectorAll('input[name="payment"][disabled]').forEach(input => {
+            input.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        });
+
+        // Also prevent the label from selecting disabled options
+        document.querySelectorAll('#payment-options .cursor-not-allowed').forEach(label => {
+            label.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        });
+    </script>
+</body>
+</html>
