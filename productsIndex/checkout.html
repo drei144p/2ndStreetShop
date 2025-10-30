@@ -6,6 +6,7 @@
     <title>Checkout</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style src="style.css"></style>
 </head>
 <body class="bg-gray-100 p-6">
     <body class="bg-gray-100 min-h-screen relative">
@@ -51,6 +52,11 @@
                                     <textarea id="address" name="address" placeholder="House/Building No., Street Name" class="w-full bg-white rounded-lg border border-gray-300 text-gray-900 px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition" rows="3" required></textarea>
                                 </div>
 
+                                <div>
+                                    <label class="block text-gray-700 font-medium mb-2" for="phone">Phone Number</label>
+                                    <input id="phone" name="phone" placeholder="Please enter a valid phone number" class="w-full bg-white rounded-lg border border-gray-300 text-gray-900 px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition" type="tel" pattern="[0-9]{10,11}" required>
+                                </div>
+
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
                                         <label class="block text-gray-700 font-medium mb-2" for="city">City</label>
@@ -70,7 +76,7 @@
                                     </div>
 
                                     <div>
-                                        <label class="block text-gray-700 font-medium mb-2" for="country">Country*</label>
+                                        <label class="block text-gray-700 font-medium mb-2" for="country">Country</label>
                                         <select id="country" name="country" class="w-full bg-white rounded-lg border border-gray-300 text-gray-900 px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition" required>
                                             <option value="">Select a country</option>
                                             <option value="PH" selected>Philippines</option>
@@ -233,6 +239,7 @@
                     const orderData = {
                         customer_name: formData.get('name'),
                         address: formData.get('address'),
+                        phone_number: formData.get('phone'),
                         city: formData.get('city'),
                         state: formData.get('state'),
                         zip_code: formData.get('zip'),
@@ -241,6 +248,7 @@
                         items: cartItems,
                         total_amount: calculateTotal(),
                         order_date: new Date().toISOString()
+                        
                     };
 
                     const { data, error } = await supabaseClient

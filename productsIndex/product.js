@@ -32,12 +32,16 @@ function renderPage() {
                 <span class="text-lg font-bold block overflow-hidden text-ellipsis whitespace-nowrap" title="${p.name}">
                 ${p.name}
                 </span>
-                <p class="text-xs text-gray-700">Stock: ${p.stock}</p>
+                <p class="text-xs ${p.stock === 0 ? 'text-red-600 font-bold' : 'text-gray-700'}">Stock: ${p.stock}</p>
             </div>
             <span class="font-bold text-red-600">₱${p.price}</span>
             </div>
-            <button class="bg-red-500 hover:bg-red-700 text-white py-2 rounded-md">
-            Add to cart
+            <button 
+                class="${p.stock === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-700'} text-white py-2 rounded-md transition-colors"
+                ${p.stock === 0 ? 'disabled' : ''}
+                data-stock="${p.stock}"
+            >
+                ${p.stock === 0 ? 'Out of Stock' : 'Add to cart'}
             </button>
         </div>
         </div>
@@ -51,6 +55,7 @@ function renderPage() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    initializeCartBadge();
     loadAllProducts();
     document.getElementById('load-more').addEventListener('click', () => {
         currentPage++;
@@ -100,12 +105,16 @@ async function searchProducts(query) {
                             <div class="flex flex-row justify-between items-start">
                                 <div class="flex flex-col flex-1">
                                     <span class="text-lg font-bold line-clamp-2 h-9 w-full">${product.name}</span>
-                                    <p class="text-xs text-gray-700">Stock: ${product.stock}</p>
+                                    <p class="text-xs ${product.stock === 0 ? 'text-red-600 font-bold' : 'text-gray-700'}">Stock: ${product.stock}</p>
                                 </div>
                                 <span class="font-bold text-red-600 pr-2">₱${product.price}</span>
                             </div>
-                            <button class="bg-red-500 hover:bg-red-700 text-white py-1 rounded-md">
-                            Add to cart
+                            <button 
+                                class="${product.stock === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-500 hover:bg-red-700'} text-white py-1 rounded-md transition-colors"
+                                ${product.stock === 0 ? 'disabled' : ''}
+                                data-stock="${product.stock}"
+                            >
+                                ${product.stock === 0 ? 'Out of Stock' : 'Add to cart'}
                             </button>
                         </div>
                     </div>
@@ -121,7 +130,6 @@ async function searchProducts(query) {
     }
 }
 
-// Initialize the page
 loadAllProducts();
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -134,7 +142,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
-
 
 let cart = [];
 
@@ -149,21 +156,55 @@ document.addEventListener("click", (e) => {
         const name = card.querySelector("span.text-lg")?.textContent.trim();
         const price = card.querySelector("span.font-bold.text-red-600")?.textContent.trim();
         const img = card.querySelector("img")?.getAttribute("src");
+        const stock = parseInt(e.target.getAttribute('data-stock'));
         
-        console.log("Adding to cart:", { name, price, img });
+        if (stock === 0) {
+            alert('This product is out of stock and cannot be added to cart.');
+            return;
+        }
         
-        addToCart({ name, price, img_url: img });
+        console.log("Adding to cart:", { name, price, img, stock });
+        
+        addToCart({ name, price, img_url: img, stock });
     }
 });
 
+function updateCartBadge() {
+    const cartBadge = document.getElementById('cart-badge');
+    const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
+    
+    if (totalItems > 0) {
+        cartBadge.classList.remove('hidden');
+        cartBadge.textContent = totalItems > 99 ? '99+' : totalItems.toString();
+        // Add pulse animation
+        cartBadge.classList.add('pulse');
+        setTimeout(() => cartBadge.classList.remove('pulse'), 500);
+    } else {
+        cartBadge.classList.add('hidden');
+    }
+}
+
+// Update the addToCart function to include badge update
 function addToCart(item) {
+    // Additional check for stock
+    if (item.stock === 0) {
+        alert('This product is out of stock and cannot be added to cart.');
+        return;
+    }
+
     const existing = cart.find(i => i.name === item.name);
     if (existing) {
+        // Check if adding more than available stock
+        if (existing.quantity + 1 > item.stock) {
+            alert(`Cannot add more items. Only ${item.stock} available in stock.`);
+            return;
+        }
         existing.quantity += 1;
     } else {
         cart.push({ ...item, quantity: 1 });
     }
     renderCart();
+    updateCartBadge(); // Add this line
 }
 
 function renderCart() {
@@ -173,13 +214,18 @@ function renderCart() {
     cartList.innerHTML = "";
     cart.forEach(item => {
         const li = document.createElement("li");
-        li.className = "flex justify-between items-center mb-2";
+        li.className = "flex justify-between items-center mb-2 p-2 bg-gray-50 rounded";
         li.innerHTML = `
             <div class="flex items-center gap-2">
-                <img src="${item.img_url}" alt="${item.name}" class="w-10 h-10 rounded">
-                <span>${item.name} x${item.quantity}</span>
+                <div>
+                    <span class="font-medium">${item.name}</span>
+                    <p class="text-xs text-gray-600">Qty: ${item.quantity}</p>
+                </div>
             </div>
-            <span>${item.price}</span>
+            <div class="text-right">
+                <span class="font-bold">${item.price}</span>
+                <p class="text-xs text-gray-600">Total: ₱${(parseFloat(item.price.replace(/[₱,]/g, '')) * item.quantity).toFixed(2)}</p>
+            </div>
         `;
         cartList.appendChild(li);
     });
@@ -188,8 +234,9 @@ function renderCart() {
     else checkoutBtn.classList.add("hidden");
 
     localStorage.setItem("cartItems", JSON.stringify(cart));
+    updateCartBadge(); // Add this line
 }
 
 document.getElementById("checkout-btn").addEventListener("click", () => {
-window.location.href = "checkout.html";
+    window.location.href = "checkout.html";
 });
