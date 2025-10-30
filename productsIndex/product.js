@@ -184,9 +184,8 @@ function updateCartBadge() {
     }
 }
 
-// Update the addToCart function to include badge update
 function addToCart(item) {
-    // Additional check for stock
+
     if (item.stock === 0) {
         alert('This product is out of stock and cannot be added to cart.');
         return;
@@ -194,7 +193,7 @@ function addToCart(item) {
 
     const existing = cart.find(i => i.name === item.name);
     if (existing) {
-        // Check if adding more than available stock
+
         if (existing.quantity + 1 > item.stock) {
             alert(`Cannot add more items. Only ${item.stock} available in stock.`);
             return;
@@ -204,7 +203,7 @@ function addToCart(item) {
         cart.push({ ...item, quantity: 1 });
     }
     renderCart();
-    updateCartBadge(); // Add this line
+    updateCartBadge();
 }
 
 function renderCart() {
@@ -212,29 +211,51 @@ function renderCart() {
     const checkoutBtn = document.getElementById("checkout-btn");
     
     cartList.innerHTML = "";
-    cart.forEach(item => {
+    cart.forEach((item, index) => {
         const li = document.createElement("li");
-        li.className = "flex justify-between items-center mb-2 p-2 bg-gray-50 rounded";
+        li.className = "flex justify-between items-center mb-2 p-3 bg-gray-50 rounded-lg border border-gray-200";
         li.innerHTML = `
-            <div class="flex items-center gap-2">
-                <div>
-                    <span class="font-medium">${item.name}</span>
+            <div class="flex items-center gap-3 flex-1">
+                <div class="flex-1">
+                    <span class="font-medium text-gray-800">${item.name}</span>
                     <p class="text-xs text-gray-600">Qty: ${item.quantity}</p>
                 </div>
             </div>
-            <div class="text-right">
-                <span class="font-bold">${item.price}</span>
+            <div class="text-right mr-2">
+                <span class="font-bold text-gray-800">${item.price}</span>
                 <p class="text-xs text-gray-600">Total: ₱${(parseFloat(item.price.replace(/[₱,]/g, '')) * item.quantity).toFixed(2)}</p>
             </div>
+            <button class="remove-item text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 transition-colors" data-index="${index}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+            </button>
         `;
         cartList.appendChild(li);
+    });
+
+    document.querySelectorAll('.remove-item').forEach(button => {
+        button.addEventListener('click', function() {
+            const index = parseInt(this.getAttribute('data-index'));
+            removeFromCart(index);
+        });
     });
 
     if (cart.length > 0) checkoutBtn.classList.remove("hidden");
     else checkoutBtn.classList.add("hidden");
 
     localStorage.setItem("cartItems", JSON.stringify(cart));
-    updateCartBadge(); // Add this line
+    updateCartBadge();
+}
+
+function removeFromCart(index) {
+    if (index >= 0 && index < cart.length) {
+        const removedItem = cart[index];
+        cart.splice(index, 1);
+        renderCart();
+        
+        showNotification(`Removed ${removedItem.name} from cart`);
+    }
 }
 
 document.getElementById("checkout-btn").addEventListener("click", () => {

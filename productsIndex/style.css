@@ -12,3 +12,15 @@
     50% { transform: scale(1.2); }
     100% { transform: scale(1); }
 }
+
+.remove-item {
+    transition: all 0.2s ease;
+}
+
+.remove-item:hover {
+    transform: scale(1.1);
+}
+
+.remove-item:active {
+    transform: scale(0.95);
+}
