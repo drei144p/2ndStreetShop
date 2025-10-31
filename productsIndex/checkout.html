@@ -6,6 +6,7 @@
     <title>Checkout</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <style src="style.css"></style>
 </head>
 <body class="bg-gray-100 p-6">
@@ -164,6 +165,7 @@
     </div>
 
     <script>
+        emailjs.init("kr4qu3TfwBUke4sRc");
         const SUPABASE_URL = 'https://wqlxqsuxzydsnvrifksu.supabase.co'
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxbHhxc3V4enlkc252cmlma3N1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU3NTYwNjgsImV4cCI6MjA2MTMzMjA2OH0.xLCjspi1YMi01wMfgDx2QIN7aM19tq4Vk-txskxNVH0'
         
@@ -182,56 +184,56 @@
         }
 
         function displayCartItems() {
-    if (cartItems.length === 0) {
-        checkoutContainer.innerHTML = '<p class="text-gray-500 text-center py-8">Your cart is empty.</p>';
-        totalPriceElement.textContent = '₱0.00';
-    } else {
-        checkoutContainer.innerHTML = cartItems.map((item, index) => {
-            const price = parseFloat(item.price.replace(/[₱,]/g, ''));
-            const itemTotal = price * item.quantity;
-            
-            return `
-                <div class="flex justify-between items-center p-4 bg-white rounded-lg border border-gray-200">
-                    <div class="flex items-center gap-4 flex-1">
-                        <div class="flex-1">
-                            <p class="font-semibold text-gray-800">${item.name}</p>
-                            <p class="text-sm text-gray-600">Quantity: ${item.quantity}</p>
+            if (cartItems.length === 0) {
+                checkoutContainer.innerHTML = '<p class="text-gray-500 text-center py-8">Your cart is empty.</p>';
+                totalPriceElement.textContent = '₱0.00';
+            } else {
+                checkoutContainer.innerHTML = cartItems.map((item, index) => {
+                    const price = parseFloat(item.price.replace(/[₱,]/g, ''));
+                    const itemTotal = price * item.quantity;
+                    
+                    return `
+                        <div class="flex justify-between items-center p-4 bg-white rounded-lg border border-gray-200">
+                            <div class="flex items-center gap-4 flex-1">
+                                <div class="flex-1">
+                                    <p class="font-semibold text-gray-800">${item.name}</p>
+                                    <p class="text-sm text-gray-600">Quantity: ${item.quantity}</p>
+                                </div>
+                            </div>
+                            <div class="text-right mr-4">
+                                <p class="font-bold text-indigo-600">${item.price}</p>
+                                <p class="text-sm text-gray-600">Total: ₱${itemTotal.toFixed(2)}</p>
+                            </div>
+                            <button class="remove-item text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50 transition-colors" data-index="${index}">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
                         </div>
-                    </div>
-                    <div class="text-right mr-4">
-                        <p class="font-bold text-indigo-600">${item.price}</p>
-                        <p class="text-sm text-gray-600">Total: ₱${itemTotal.toFixed(2)}</p>
-                    </div>
-                    <button class="remove-item text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50 transition-colors" data-index="${index}">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                        </svg>
-                    </button>
-                </div>
-            `;
-        }).join('');
-        
-        document.querySelectorAll('.remove-item').forEach(button => {
-            button.addEventListener('click', function() {
-                const index = parseInt(this.getAttribute('data-index'));
-                removeFromCartInCheckout(index);
-            });
-        });
-        
-        const total = calculateTotal();
-        totalPriceElement.textContent = `₱${total.toFixed(2)}`;
-    }
-}
+                    `;
+                }).join('');
+                
+                document.querySelectorAll('.remove-item').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const index = parseInt(this.getAttribute('data-index'));
+                        removeFromCartInCheckout(index);
+                    });
+                });
+                
+                const total = calculateTotal();
+                totalPriceElement.textContent = `₱${total.toFixed(2)}`;
+            }
+        }
 
-function removeFromCartInCheckout(index) {
-    if (index >= 0 && index < cartItems.length) {
-        cartItems.splice(index, 1);
-        localStorage.setItem("cartItems", JSON.stringify(cartItems));
-        displayCartItems();
-        
-        alert('Item removed from cart');
-    }
-}
+        function removeFromCartInCheckout(index) {
+            if (index >= 0 && index < cartItems.length) {
+                cartItems.splice(index, 1);
+                localStorage.setItem("cartItems", JSON.stringify(cartItems));
+                displayCartItems();
+                
+                alert('Item removed from cart');
+            }
+        }
 
         displayCartItems();
 
@@ -252,10 +254,9 @@ function removeFromCartInCheckout(index) {
                     return;
                 }
 
-                submitBtn.textContent = 'Order Now';
-                formSubmitted = true;
+                    submitBtn.textContent = 'Order Now';
+                    formSubmitted = true;
             } else {
-
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = '<span class="inline-block animate-spin mr-2">⏳</span> Processing...';
 
@@ -274,27 +275,52 @@ function removeFromCartInCheckout(index) {
                         payment_method: paymentMethod,
                         items: cartItems,
                         total_amount: calculateTotal(),
-                        order_date: new Date().toISOString()
-                        
+                        order_date: new Date().toLocaleString()
                     };
 
                     const { data, error } = await supabaseClient
                         .from('orders')
-                        .insert([orderData]);
+                        .insert([orderData])
+                        .select();
 
                     if (error) throw error;
 
-                    localStorage.removeItem('cartItems');
-                    alert('Order placed successfully! 🎉');
-                    window.location.href = 'products.html';
+                    const itemsList = orderData.items.map(item => 
+                        `• ${item.name} (Qty: ${item.quantity}) - ${item.price}`
+                    ).join('\n'); 
+
+                    const emailParams = {
+                        business_email: '2ndstreet.motoshop@gmail.com', 
+                        order_id: data[0].id,
+                        customer_name: orderData.customer_name,
+                        customer_phone: orderData.phone_number,
+                        order_date: orderData.order_date,
+                        total_amount: `₱${orderData.total_amount.toFixed(2)}`,
+                        payment_method: orderData.payment_method === 'cod' ? 'Cash on Delivery' : 'Cash on Pickup',
+                        shipping_address: `${orderData.address}, ${orderData.city}, ${orderData.state} ${orderData.zip_code}, ${orderData.country}`,
+                        items_list: itemsList,
+                        item_count: orderData.items.reduce((total, item) => total + item.quantity, 0)
+                    };
+
+
+                    try {
+                        await emailjs.send('service_d21ukdh', 'template_nfz28po', emailParams);
+                        console.log('Business notification sent successfully');
+                    } catch (emailError) {
+                        console.log('Email notification failed, but order was saved:', emailError);
+                    }
+
+                        localStorage.removeItem('cartItems');
+                        alert('Order placed successfully! 🎉 We will contact you soon.');
+                        window.location.href = 'products.html';
                 } catch (error) {
-                    console.error('Error placing order:', error);
-                    alert('Failed to place order. Please try again.');
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Order Now';
+                        console.error('Error placing order:', error);
+                        alert('Failed to place order. Please try again.');
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Order Now';
                 }
             }
-        }); 
+        });
 
         document.querySelectorAll('input[name="payment"][disabled]').forEach(input => {
             input.addEventListener('click', (e) => {
