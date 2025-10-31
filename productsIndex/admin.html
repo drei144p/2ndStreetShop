@@ -9,7 +9,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 min-h-screen">
-    <!-- Login Screen -->
+    <video autoplay muted loop playsinline class="fixed top-0 left-0 w-full h-full object-cover -z-10">
+        <source src="../assets/vids/hero2.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
     <div id="login-screen" class="min-h-screen flex items-center justify-center px-4">
         <div class="bg-white shadow-2xl rounded-2xl overflow-hidden max-w-md w-full">
             <div class="bg-gradient-to-r from-gray-700 to-gray-900 p-6">
@@ -37,7 +41,6 @@
         </div>
     </div>
 
-    <!-- Admin Panel (Hidden by default) -->
     <div id="admin-panel" class="hidden">
         <div class="container mx-auto p-6 max-w-7xl">
             <div class="bg-white shadow-2xl rounded-2xl overflow-hidden">
@@ -51,7 +54,6 @@
                     </button>
                 </div>
 
-                <!-- Filter Tabs -->
                 <div class="border-b border-gray-200 bg-gray-50">
                     <nav class="flex space-x-4 px-6" aria-label="Tabs">
                         <button data-filter="all" class="filter-tab active py-4 px-6 text-sm font-medium border-b-2 border-indigo-500 text-indigo-600">
@@ -76,7 +78,7 @@
                     </div>
 
                     <div id="orders-container" class="hidden space-y-4">
-                        <!-- Orders will be dynamically inserted here -->
+
                     </div>
 
                     <div id="no-orders" class="hidden text-center py-12">
@@ -90,7 +92,6 @@
         </div>
     </div>
 
-    <!-- Modal for Order Details -->
     <div id="order-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div class="sticky top-0 bg-gradient-to-r from-gray-700 to-gray-900 p-6 flex justify-between items-center">
@@ -102,7 +103,6 @@
                 </button>
             </div>
             <div id="modal-content" class="p-6">
-                <!-- Content will be dynamically inserted -->
             </div>
         </div>
     </div>
@@ -278,7 +278,6 @@
             }).join('');
         }
 
-        // View order details
         window.viewOrderDetails = function(orderId) {
             const order = allOrders.find(o => o.id === orderId);
             if (!order) return;
@@ -385,9 +384,7 @@
             }
         };
 
-        // Mark as fraudulent and restore stock
         window.markAsFraudulent = async function(orderId) {
-            // Convert to integer if it's a string
             orderId = parseInt(orderId);
             
             if (!confirm('Are you sure you want to mark this order as fraudulent? This will restore the stock.')) return;
@@ -436,7 +433,6 @@
                     }
                 }
 
-                // Update order status
                 console.log('Updating order status to fraudulent...');
                 const { data, error } = await supabaseClient
                     .from('orders')
@@ -459,7 +455,6 @@
             }
         };
 
-        // Filter tabs
         document.querySelectorAll('.filter-tab').forEach(tab => {
             tab.addEventListener('click', function() {
                 document.querySelectorAll('.filter-tab').forEach(t => {
@@ -475,19 +470,16 @@
             });
         });
 
-        // Close modal
         document.getElementById('close-modal').addEventListener('click', () => {
             document.getElementById('order-modal').classList.add('hidden');
         });
 
-        // Close modal on outside click
         document.getElementById('order-modal').addEventListener('click', (e) => {
             if (e.target.id === 'order-modal') {
                 document.getElementById('order-modal').classList.add('hidden');
             }
         });
 
-        // Check auth on page load
         checkAuth();
     </script>
 </body>
