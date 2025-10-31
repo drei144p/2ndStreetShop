@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout</title>
-      <link rel="icon" type="image/svg+xml" href="../assets/img_logos/motorcycle.svg">
+    <link rel="icon" type="image/svg+xml" href="../assets/img_logos/motorcycle.svg">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
@@ -108,7 +108,6 @@
                                         </div>
                                         <input class="w-5 h-5 text-indigo-600 focus:ring-2 focus:ring-indigo-500" value="gcash" name="payment" type="radio" disabled>
                                     </label>
-                                    <!-- Tooltip -->
                                     <div class="absolute invisible group-hover:visible opacity-0 group-hover:opacity-100 bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-sm rounded-lg whitespace-nowrap transition-all duration-200 pointer-events-none">
                                         Currently not available
                                         <div class="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
@@ -129,7 +128,6 @@
                                         </div>
                                         <input class="w-5 h-5 text-indigo-600 focus:ring-2 focus:ring-indigo-500" value="card" name="payment" type="radio" disabled>
                                     </label>
-                                    <!-- Tooltip -->
                                     <div class="absolute invisible group-hover:visible opacity-0 group-hover:opacity-100 bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-sm rounded-lg whitespace-nowrap transition-all duration-200 pointer-events-none">
                                         Currently not available
                                         <div class="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
@@ -241,6 +239,84 @@
             }
         }
 
+        // Verify stock availability before placing order
+        async function verifyStockAvailability() {
+            try {
+                for (const item of cartItems) {
+                    const { data: product, error } = await supabaseClient
+                        .from('product')
+                        .select('stock, name')
+                        .eq('name', item.name)
+                        .single();
+
+                    if (error) throw error;
+
+                    if (product.stock < item.quantity) {
+                        return {
+                            available: false,
+                            message: `Sorry, "${item.name}" has insufficient stock. Available: ${product.stock}, Requested: ${item.quantity}`
+                        };
+                    }
+                }
+                return { available: true };
+            } catch (error) {
+                console.error('Error verifying stock:', error);
+                return {
+                    available: false,
+                    message: 'Error verifying stock availability. Please try again.'
+                };
+            }
+        }
+
+        // Update stock after order confirmation
+        async function updateProductStock() {
+            try {
+                console.log('Starting stock update for items:', cartItems);
+                
+                for (const item of cartItems) {
+                    console.log('Processing item:', item.name);
+                    
+                    // Get current stock
+                    const { data: product, error: fetchError } = await supabaseClient
+                        .from('product')
+                        .select('stock, name')
+                        .eq('name', item.name)
+                        .single();
+
+                    console.log('Current product data:', product, 'Error:', fetchError);
+
+                    if (fetchError) {
+                        console.error('Error fetching product:', fetchError);
+                        throw fetchError;
+                    }
+
+                    // Calculate new stock
+                    const newStock = product.stock - item.quantity;
+                    console.log(`Updating ${item.name}: ${product.stock} - ${item.quantity} = ${newStock}`);
+
+                    // Update stock
+                    const { data: updateData, error: updateError } = await supabaseClient
+                        .from('product')
+                        .update({ stock: newStock })
+                        .eq('name', item.name)
+                        .select();
+
+                    console.log('Update result:', updateData, 'Error:', updateError);
+
+                    if (updateError) {
+                        console.error('Error updating stock:', updateError);
+                        throw updateError;
+                    }
+                    
+                    console.log(`Successfully updated stock for ${item.name}`);
+                }
+                return { success: true };
+            } catch (error) {
+                console.error('Error updating stock:', error);
+                return { success: false, error };
+            }
+        }
+
         displayCartItems();
 
         const submitBtn = document.getElementById('submit-btn');
@@ -248,7 +324,6 @@
 
         submitBtn.addEventListener('click', async () => {
             if (!formSubmitted) {
-
                 if (!shippingForm.checkValidity()) {
                     shippingForm.reportValidity();
                     return;
@@ -260,13 +335,30 @@
                     return;
                 }
 
-                    submitBtn.textContent = 'Order Now';
-                    formSubmitted = true;
+                submitBtn.textContent = 'Order Now';
+                formSubmitted = true;
             } else {
+                // Check if cart is empty
+                if (cartItems.length === 0) {
+                    alert('Your cart is empty. Please add items before placing an order.');
+                    return;
+                }
+
                 submitBtn.disabled = true;
-                submitBtn.innerHTML = '<span class="inline-block animate-spin mr-2">⏳</span> Processing...';
+                submitBtn.innerHTML = '<span class="inline-block animate-spin mr-2">⏳</span> Verifying stock...';
 
                 try {
+                    // Step 1: Verify stock availability
+                    const stockCheck = await verifyStockAvailability();
+                    if (!stockCheck.available) {
+                        alert(stockCheck.message);
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Order Now';
+                        return;
+                    }
+
+                    submitBtn.innerHTML = '<span class="inline-block animate-spin mr-2">⏳</span> Processing order...';
+
                     const formData = new FormData(shippingForm);
                     const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
                     
@@ -281,9 +373,12 @@
                         payment_method: paymentMethod,
                         items: cartItems,
                         total_amount: calculateTotal(),
-                        order_date: new Date().toLocaleString()
+                        order_date: new Date().toLocaleString(),
+                        order_status: 'pending', // Default status
+                        stock_reduced: false // Flag to track if stock was reduced
                     };
 
+                    // Step 2: Insert order into database
                     const { data, error } = await supabaseClient
                         .from('orders')
                         .insert([orderData])
@@ -291,6 +386,23 @@
 
                     if (error) throw error;
 
+                    submitBtn.innerHTML = '<span class="inline-block animate-spin mr-2">⏳</span> Updating inventory...';
+
+                    // Step 3: Update stock immediately (will be reversed if order is marked as fraudulent)
+                    const stockUpdate = await updateProductStock();
+                    if (!stockUpdate.success) {
+                        throw new Error('Failed to update stock');
+                    }
+
+                    // Step 4: Mark order as stock_reduced
+                    await supabaseClient
+                        .from('orders')
+                        .update({ stock_reduced: true })
+                        .eq('id', data[0].id);
+
+                    submitBtn.innerHTML = '<span class="inline-block animate-spin mr-2">⏳</span> Sending confirmation...';
+
+                    // Step 5: Send email notification
                     const itemsList = orderData.items.map(item => 
                         `• ${item.name} (Qty: ${item.quantity}) - ${item.price}`
                     ).join('\n'); 
@@ -308,7 +420,6 @@
                         item_count: orderData.items.reduce((total, item) => total + item.quantity, 0)
                     };
 
-
                     try {
                         await emailjs.send('service_d21ukdh', 'template_nfz28po', emailParams);
                         console.log('Business notification sent successfully');
@@ -316,14 +427,16 @@
                         console.log('Email notification failed, but order was saved:', emailError);
                     }
 
-                        localStorage.removeItem('cartItems');
-                        alert('Order placed successfully! 🎉 We will contact you soon.');
-                        window.location.href = 'products.html';
+                    // Step 6: Clear cart and redirect
+                    localStorage.removeItem('cartItems');
+                    alert(`Order placed successfully! 🎉\n\nOrder ID: ${data[0].id}\n\nYour order is pending verification. Stock has been reserved. We will contact you soon to confirm your order.`);
+                    window.location.href = 'products.html';
+                    
                 } catch (error) {
-                        console.error('Error placing order:', error);
-                        alert('Failed to place order. Please try again.');
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = 'Order Now';
+                    console.error('Error placing order:', error);
+                    alert('Failed to place order. Please try again. Error: ' + error.message);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Order Now';
                 }
             }
         });

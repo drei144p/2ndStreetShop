@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Order Management</title>
+    <link rel="icon" type="image/svg+xml" href="../assets/img_logos/motorcycle.svg">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Login Screen -->
+    <div id="login-screen" class="min-h-screen flex items-center justify-center px-4">
+        <div class="bg-white shadow-2xl rounded-2xl overflow-hidden max-w-md w-full">
+            <div class="bg-gradient-to-r from-gray-700 to-gray-900 p-6">
+                <h1 class="text-3xl font-bold text-white">Admin Login</h1>
+                <p class="text-gray-300 mt-2">Enter credentials to access the admin panel</p>
+            </div>
+            <div class="p-8">
+                <form id="login-form" class="space-y-6">
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2" for="admin-username">Username</label>
+                        <input id="admin-username" type="text" class="w-full bg-white rounded-lg border border-gray-300 text-gray-900 px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2" for="admin-password">Password</label>
+                        <input id="admin-password" type="password" class="w-full bg-white rounded-lg border border-gray-300 text-gray-900 px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition" required>
+                    </div>
+                    <div id="login-error" class="hidden text-red-600 text-sm bg-red-50 p-3 rounded-lg">
+                        Invalid credentials. Please try again.
+                    </div>
+                    <button type="submit" class="w-full bg-gradient-to-r from-gray-600 to-gray-800 text-white font-bold py-3 px-6 rounded-lg hover:from-gray-700 hover:to-gray-900 transition-all">
+                        Login
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Panel (Hidden by default) -->
+    <div id="admin-panel" class="hidden">
+        <div class="container mx-auto p-6 max-w-7xl">
+            <div class="bg-white shadow-2xl rounded-2xl overflow-hidden">
+                <div class="bg-gradient-to-r from-gray-700 to-gray-900 p-6 flex justify-between items-center">
+                    <div>
+                        <h1 class="text-3xl font-bold text-white">Order Management</h1>
+                        <p class="text-gray-300 mt-2">Review and manage customer orders</p>
+                    </div>
+                    <button id="logout-btn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors">
+                        Logout
+                    </button>
+                </div>
+
+                <!-- Filter Tabs -->
+                <div class="border-b border-gray-200 bg-gray-50">
+                    <nav class="flex space-x-4 px-6" aria-label="Tabs">
+                        <button data-filter="all" class="filter-tab active py-4 px-6 text-sm font-medium border-b-2 border-indigo-500 text-indigo-600">
+                            All Orders
+                        </button>
+                        <button data-filter="pending" class="filter-tab py-4 px-6 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                            Pending
+                        </button>
+                        <button data-filter="confirmed" class="filter-tab py-4 px-6 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                            Confirmed
+                        </button>
+                        <button data-filter="fraudulent" class="filter-tab py-4 px-6 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                            Fraudulent
+                        </button>
+                    </nav>
+                </div>
+
+                <div class="p-6">
+                    <div id="loading" class="text-center py-12">
+                        <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+                        <p class="mt-4 text-gray-600">Loading orders...</p>
+                    </div>
+
+                    <div id="orders-container" class="hidden space-y-4">
+                        <!-- Orders will be dynamically inserted here -->
+                    </div>
+
+                    <div id="no-orders" class="hidden text-center py-12">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                        </svg>
+                        <p class="mt-4 text-gray-600">No orders found</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Order Details -->
+    <div id="order-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-gradient-to-r from-gray-700 to-gray-900 p-6 flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-white">Order Details</h2>
+                <button id="close-modal" class="text-white hover:text-gray-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="modal-content" class="p-6">
+                <!-- Content will be dynamically inserted -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://wqlxqsuxzydsnvrifksu.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxbHhxc3V4enlkc252cmlma3N1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU3NTYwNjgsImV4cCI6MjA2MTMzMjA2OH0.xLCjspi1YMi01wMfgDx2QIN7aM19tq4Vk-txskxNVH0';
+        
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let allOrders = [];
+        let currentFilter = 'all';
+        let autoRefreshInterval;
+
+        // Admin credentials (CHANGE THESE!)
+        const ADMIN_CREDENTIALS = {
+            username: 'admin',
+            password: 'admin123' // IMPORTANT: Change this password!
+        };
+
+        // Check if already logged in
+        function checkAuth() {
+            const isLoggedIn = sessionStorage.getItem('adminLoggedIn');
+            if (isLoggedIn === 'true') {
+                showAdminPanel();
+            }
+        }
+
+        // Login form handler
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('admin-username').value;
+            const password = document.getElementById('admin-password').value;
+            const errorDiv = document.getElementById('login-error');
+            
+            if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+                sessionStorage.setItem('adminLoggedIn', 'true');
+                errorDiv.classList.add('hidden');
+                showAdminPanel();
+            } else {
+                errorDiv.classList.remove('hidden');
+                document.getElementById('admin-password').value = '';
+            }
+        });
+
+        // Logout handler
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            sessionStorage.removeItem('adminLoggedIn');
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+            document.getElementById('admin-panel').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+            document.getElementById('admin-username').value = '';
+            document.getElementById('admin-password').value = '';
+        });
+
+        // Show admin panel
+        function showAdminPanel() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('admin-panel').classList.remove('hidden');
+            loadOrders();
+            
+            // Auto-refresh every 30 seconds
+            autoRefreshInterval = setInterval(loadOrders, 30000);
+        }
+
+        // Load all orders
+        async function loadOrders() {
+            try {
+                const { data: orders, error } = await supabaseClient
+                    .from('orders')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                allOrders = orders;
+                displayOrders();
+                
+                document.getElementById('loading').classList.add('hidden');
+                
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                document.getElementById('loading').innerHTML = `
+                    <div class="text-red-600">
+                        <p class="font-semibold">Error loading orders</p>
+                        <p class="text-sm mt-2">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Display orders based on current filter
+        function displayOrders() {
+            const container = document.getElementById('orders-container');
+            const noOrders = document.getElementById('no-orders');
+            
+            let filteredOrders = allOrders;
+            if (currentFilter !== 'all') {
+                filteredOrders = allOrders.filter(order => order.order_status === currentFilter);
+            }
+
+            if (filteredOrders.length === 0) {
+                container.classList.add('hidden');
+                noOrders.classList.remove('hidden');
+                return;
+            }
+
+            noOrders.classList.add('hidden');
+            container.classList.remove('hidden');
+
+            container.innerHTML = filteredOrders.map(order => {
+                const statusColors = {
+                    'pending': 'bg-yellow-100 text-yellow-800',
+                    'confirmed': 'bg-green-100 text-green-800',
+                    'fraudulent': 'bg-red-100 text-red-800'
+                };
+
+                const statusColor = statusColors[order.order_status] || 'bg-gray-100 text-gray-800';
+                const itemCount = order.items?.length || 0;
+                
+                // Debug: log the order object to see all available fields
+                console.log('Order object:', order);
+
+                return `
+                    <div class="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-900">Order #${order.id}</h3>
+                                <p class="text-sm text-gray-600 mt-1">${order.order_date}</p>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold ${statusColor}">
+                                ${order.order_status?.toUpperCase() || 'PENDING'}
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <p class="text-sm text-gray-600">Customer</p>
+                                <p class="font-semibold text-gray-900">${order.customer_name}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Phone</p>
+                                <p class="font-semibold text-gray-900">${order.phone_number}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Total Amount</p>
+                                <p class="font-semibold text-indigo-600">₱${order.total_amount?.toFixed(2)}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Items</p>
+                                <p class="font-semibold text-gray-900">${itemCount} item(s)</p>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2 mt-4">
+                            <button onclick="viewOrderDetails(${order.id})" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg transition-colors">
+                                View Details
+                            </button>
+                            ${order.order_status === 'pending' ? `
+                                <button onclick="confirmOrder(${order.id})" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg transition-colors">
+                                    Confirm
+                                </button>
+                                <button onclick="markAsFraudulent(${order.id})" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition-colors">
+                                    Fraudulent
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // View order details
+        window.viewOrderDetails = function(orderId) {
+            const order = allOrders.find(o => o.id === orderId);
+            if (!order) return;
+
+            const modal = document.getElementById('order-modal');
+            const modalContent = document.getElementById('modal-content');
+
+            const itemsList = order.items?.map(item => `
+                <div class="flex justify-between items-center py-3 border-b border-gray-200">
+                    <div class="flex-1">
+                        <p class="font-semibold text-gray-900">${item.name}</p>
+                        <p class="text-sm text-gray-600">Quantity: ${item.quantity}</p>
+                    </div>
+                    <p class="font-semibold text-indigo-600">${item.price}</p>
+                </div>
+            `).join('') || '<p class="text-gray-500">No items</p>';
+
+            modalContent.innerHTML = `
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900 mb-3">Customer Information</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-sm text-gray-600">Name</p>
+                                <p class="font-semibold">${order.customer_name}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Phone</p>
+                                <p class="font-semibold">${order.phone_number}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900 mb-3">Shipping Address</h3>
+                        <p class="text-gray-700">${order.address}</p>
+                        <p class="text-gray-700">${order.city}, ${order.state} ${order.zip_code}</p>
+                        <p class="text-gray-700">${order.country}</p>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900 mb-3">Order Items</h3>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            ${itemsList}
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900 mb-3">Payment Details</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-sm text-gray-600">Payment Method</p>
+                                <p class="font-semibold">${order.payment_method === 'cod' ? 'Cash on Delivery' : 'Cash on Pickup'}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">Total Amount</p>
+                                <p class="font-semibold text-indigo-600 text-xl">₱${order.total_amount?.toFixed(2)}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900 mb-3">Order Status</h3>
+                        <p class="text-gray-700">Status: <span class="font-semibold">${order.order_status?.toUpperCase()}</span></p>
+                        <p class="text-gray-700">Stock Reduced: <span class="font-semibold">${order.stock_reduced ? 'Yes' : 'No'}</span></p>
+                    </div>
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+        };
+
+        // Confirm order
+        window.confirmOrder = async function(orderId) {
+            // Convert to integer if it's a string
+            orderId = parseInt(orderId);
+            console.log('confirmOrder called with ID:', orderId, 'Type:', typeof orderId);
+            
+            if (!confirm('Are you sure you want to confirm this order as legitimate?')) return;
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('orders')
+                    .update({ order_status: 'confirmed' })
+                    .eq('id', orderId)
+                    .select();
+
+                console.log('Supabase response:', { data, error });
+
+                if (error) {
+                    console.error('Supabase error:', error);
+                    throw error;
+                }
+
+                if (!data || data.length === 0) {
+                    throw new Error('No rows were updated. Order may not exist.');
+                }
+
+                alert('Order confirmed successfully!');
+                await loadOrders();
+            } catch (error) {
+                console.error('Full error confirming order:', error);
+                alert('Failed to confirm order: ' + error.message);
+            }
+        };
+
+        // Mark as fraudulent and restore stock
+        window.markAsFraudulent = async function(orderId) {
+            // Convert to integer if it's a string
+            orderId = parseInt(orderId);
+            
+            if (!confirm('Are you sure you want to mark this order as fraudulent? This will restore the stock.')) return;
+
+            try {
+                const order = allOrders.find(o => o.id === orderId);
+                if (!order) throw new Error('Order not found');
+
+                console.log('Order to mark as fraudulent:', order);
+                console.log('Items in order:', order.items);
+
+                // Restore stock if it was reduced
+                if (order.stock_reduced && order.items) {
+                    console.log('Restoring stock for items...');
+                    
+                    for (const item of order.items) {
+                        console.log('Looking for product:', item.name);
+                        
+                        const { data: product, error: fetchError } = await supabaseClient
+                            .from('product')
+                            .select('stock, name')
+                            .eq('name', item.name)
+                            .single();
+
+                        console.log('Found product:', product, 'Error:', fetchError);
+
+                        if (fetchError) {
+                            console.error('Error fetching product:', item.name, fetchError);
+                            throw fetchError;
+                        }
+
+                        const restoredStock = product.stock + item.quantity;
+                        console.log(`Restoring ${item.name}: ${product.stock} + ${item.quantity} = ${restoredStock}`);
+
+                        const { error: updateError } = await supabaseClient
+                            .from('product')
+                            .update({ stock: restoredStock })
+                            .eq('name', item.name);
+
+                        if (updateError) {
+                            console.error('Error updating stock for:', item.name, updateError);
+                            throw updateError;
+                        }
+                        
+                        console.log(`Successfully restored stock for ${item.name}`);
+                    }
+                }
+
+                // Update order status
+                console.log('Updating order status to fraudulent...');
+                const { data, error } = await supabaseClient
+                    .from('orders')
+                    .update({ 
+                        order_status: 'fraudulent',
+                        stock_reduced: false 
+                    })
+                    .eq('id', orderId)
+                    .select();
+
+                console.log('Order update response:', { data, error });
+
+                if (error) throw error;
+
+                alert('Order marked as fraudulent and stock has been restored!');
+                await loadOrders();
+            } catch (error) {
+                console.error('Error marking order as fraudulent:', error);
+                alert('Failed to process: ' + error.message);
+            }
+        };
+
+        // Filter tabs
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.filter-tab').forEach(t => {
+                    t.classList.remove('active', 'border-indigo-500', 'text-indigo-600');
+                    t.classList.add('border-transparent', 'text-gray-500');
+                });
+                
+                this.classList.add('active', 'border-indigo-500', 'text-indigo-600');
+                this.classList.remove('border-transparent', 'text-gray-500');
+                
+                currentFilter = this.dataset.filter;
+                displayOrders();
+            });
+        });
+
+        // Close modal
+        document.getElementById('close-modal').addEventListener('click', () => {
+            document.getElementById('order-modal').classList.add('hidden');
+        });
+
+        // Close modal on outside click
+        document.getElementById('order-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'order-modal') {
+                document.getElementById('order-modal').classList.add('hidden');
+            }
+        });
+
+        // Check auth on page load
+        checkAuth();
+    </script>
+</body>
+</html>
